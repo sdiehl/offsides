@@ -9,7 +9,7 @@ tokens into the token stream based on indentation, so a downstream LALRPOP gramm
 Subsumes Haskell's `do`/`where`/`let`/`of` layout, Python's INDENT/DEDENT, and PureScript/Elm/Idris
 off-side rules as configurations.
 
-It is a sibling to [`marginalia`](https://crates.io/crates/marginalia); the two compose: stack
+It is a sibling to [`marginalia`](https://crates.io/crates/marginalia), and the two compose. Stack
 `TriviaLexer` (trivia preservation) inside `LayoutLexer` (layout insertion) and pass the combined
 iterator straight to a LALRPOP parser.
 
@@ -39,7 +39,7 @@ Tab width and explicit-brace escape (`{ ... }` that suppresses layout) are confi
 ## Example
 
 [`examples/blocklet`](examples/blocklet) is a ~150-line block-let calculator with one layout opener
-(`let`). Bindings are indent-separated; the block is closed by `in`:
+(`let`). Bindings are indent-separated, and the block is closed by `in`:
 
 ```
 let
