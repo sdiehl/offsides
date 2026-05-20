@@ -53,7 +53,7 @@ in
 Run it end-to-end:
 
 ```bash
-just blocklet examples/blocklet/examples/sample.blocklet
+cargo run -p blocklet -- examples/blocklet/examples/sample.blocklet
 ```
 
 ## License
