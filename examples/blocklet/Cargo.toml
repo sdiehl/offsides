@@ -1,0 +1,30 @@
+[package]
+name = "blocklet"
+version.workspace = true
+authors.workspace = true
+build = "build.rs"
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Tiny block-let calculator demonstrating offsides end-to-end"
+
+[lib]
+name = "blocklet"
+path = "src/lib.rs"
+
+[[bin]]
+name = "blocklet"
+path = "src/main.rs"
+
+[dependencies]
+lalrpop-util = { workspace = true }
+logos = { workspace = true }
+marginalia = { workspace = true }
+offsides = { workspace = true }
+thiserror = { workspace = true }
+
+[build-dependencies]
+lalrpop = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,62 @@
+use crate::ast::{BinOp, Expr};
+use crate::lexer::{LexicalError, Tok};
+
+grammar;
+
+pub Program: Expr = <e:Expr> => e;
+
+Expr: Expr = {
+    "let" "v{" <bs:Bindings> "v}" "in" <body:Expr> => Expr::Let {
+        bindings: bs,
+        body: Box::new(body),
+    },
+    AddExpr,
+};
+
+Bindings: Vec<(String, Expr)> = {
+    <mut head:Bindings> "v;" <name:"ident"> "=" <e:AddExpr> => {
+        head.push((name, e));
+        head
+    },
+    <name:"ident"> "=" <e:AddExpr> => vec![(name, e)],
+};
+
+AddExpr: Expr = {
+    <l:AddExpr> "+" <r:MulExpr> => Expr::Bin(BinOp::Add, Box::new(l), Box::new(r)),
+    <l:AddExpr> "-" <r:MulExpr> => Expr::Bin(BinOp::Sub, Box::new(l), Box::new(r)),
+    MulExpr,
+};
+
+MulExpr: Expr = {
+    <l:MulExpr> "*" <r:Atom> => Expr::Bin(BinOp::Mul, Box::new(l), Box::new(r)),
+    <l:MulExpr> "/" <r:Atom> => Expr::Bin(BinOp::Div, Box::new(l), Box::new(r)),
+    Atom,
+};
+
+Atom: Expr = {
+    <n:"num"> => Expr::Num(n),
+    <name:"ident"> => Expr::Var(name),
+    "(" <e:Expr> ")" => e,
+};
+
+extern {
+    type Location = usize;
+    type Error = LexicalError;
+
+    enum Tok {
+        "let"   => Tok::Let,
+        "in"    => Tok::In,
+        "="     => Tok::Eq,
+        "+"     => Tok::Plus,
+        "-"     => Tok::Minus,
+        "*"     => Tok::Star,
+        "/"     => Tok::Slash,
+        "("     => Tok::LParen,
+        ")"     => Tok::RParen,
+        "num"   => Tok::Num(<i64>),
+        "ident" => Tok::Ident(<String>),
+        "v{"    => Tok::VOpen,
+        "v}"    => Tok::VClose,
+        "v;"    => Tok::VSemi,
+    }
+}

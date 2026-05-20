@@ -1,0 +1,66 @@
+[workspace]
+resolver = "2"
+members = ["examples/blocklet"]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Stephen Diehl <stephen.m.diehl@gmail.com>"]
+categories = ["parser-implementations", "development-tools"]
+documentation = "https://docs.rs/offsides"
+edition = "2021"
+homepage = "https://github.com/sdiehl/offsides"
+keywords = ["parser", "lexer", "layout", "indentation", "lalrpop"]
+license = "MIT"
+repository = "https://github.com/sdiehl/offsides"
+rust-version = "1.86"
+
+[workspace.dependencies]
+lalrpop = { version = "0.23", default-features = false }
+lalrpop-util = { version = "0.23", features = ["lexer"] }
+logos = "0.16"
+marginalia = "0.1"
+offsides = { path = ".", version = "0.1.0" }
+thiserror = "2.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+let_underscore = { level = "warn", priority = -1 }
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+panic = "deny"
+unwrap_used = "deny"
+ptr_arg = "deny"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+similar_names = "allow"
+too_many_lines = "allow"
+struct_field_names = "allow"
+needless_for_each = "allow"
+
+[package]
+name = "offsides"
+version.workspace = true
+authors.workspace = true
+categories.workspace = true
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+rust-version.workspace = true
+description = "Layout-sensitive virtual-token lexer adapter for logos + lalrpop"
+
+[lints]
+workspace = true
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
