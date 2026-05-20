@@ -29,10 +29,8 @@ The user's token type must implement `offsides::Layout` (three constructors: `v_
 `v_sep`). Which real tokens open a layout block is a runtime predicate passed into `LayoutConfig`,
 so the same enum can drive different layout rules in different contexts.
 
-## Modes
-
-- `LayoutMode::Lazy` (default): layout fires only after an opener keyword (Haskell, ML, F#,
-  PureScript, Elm, Idris).
+- `LayoutMode::Lazy` (default): layout fires only after an opener keyword (in style of Haskell, ML,
+  F#, PureScript, Elm, Idris).
 - `LayoutMode::Eager`: top-level itself is a layout block (Python-style).
 
 Tab width and explicit-brace escape (`{ ... }` that suppresses layout) are configurable on
@@ -57,10 +55,6 @@ Run it end-to-end:
 ```bash
 just blocklet examples/blocklet/examples/sample.blocklet
 ```
-
-## MSRV
-
-Rust 1.86.
 
 ## License
 
