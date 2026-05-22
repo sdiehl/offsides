@@ -18,7 +18,7 @@ rust-version = "1.95"
 lalrpop = { version = "0.23", default-features = false }
 lalrpop-util = { version = "0.23", features = ["lexer"] }
 logos = "0.16"
-marginalia = "0.1"
+marginalia = "0.1.4"
 offsides = { path = ".", version = "0.1.1" }
 thiserror = "2.0"
 
