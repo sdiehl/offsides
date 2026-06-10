@@ -52,7 +52,7 @@ dependencies = [
 
 [[package]]
 name = "blocklet"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "lalrpop",
  "lalrpop-util",
@@ -275,6 +275,8 @@ dependencies = [
 [[package]]
 name = "marginalia"
 version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbfa48ac639e6d79ac8150af2fed081e5fda7bcf4db57daa11ced52f38a61d57"
 
 [[package]]
 name = "memchr"
@@ -290,7 +292,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
 name = "offsides"
-version = "0.1.1"
+version = "0.2.0"
 
 [[package]]
 name = "parking_lot"

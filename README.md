@@ -32,9 +32,14 @@ so the same enum can drive different layout rules in different contexts.
 - `LayoutMode::Lazy` (default): layout fires only after an opener keyword (in style of Haskell, ML,
   F#, PureScript, Elm, Idris).
 - `LayoutMode::Eager`: top-level itself is a layout block (Python-style).
+- `OpenerRule::Always` (default): an opener always starts a block at the next token (Haskell report
+  style).
+- `OpenerRule::Conditional`: an opener starts a block only when the next token begins a new line at
+  deeper indentation; otherwise it is inert, so `let x = e` on one line stays flat (Koka style).
 
-Tab width and explicit-brace escape (`{ ... }` that suppresses layout) are configurable on
-`LayoutConfig`.
+Bracket pairs that suppress layout (`with_brackets`), carry openers whose opener status survives a
+bracket group for trailing block arguments like `each xs fn(x)` (`with_carry_openers`), and tab
+width are all configurable on `LayoutConfig`.
 
 ## Example
 

@@ -11,8 +11,8 @@ pub(crate) enum CloseStep {
     Pop,
     /// Emit a virtual separator (sibling at same indent).
     Separator,
-    /// No layout action needed (column is deeper than the current frame, or
-    /// the stack is empty).
+    /// No layout action needed (column is deeper than the current frame, the
+    /// stack is at its floor, or the stack is empty).
     None,
 }
 
@@ -34,13 +34,14 @@ impl IndentStack {
     }
 
     /// Compute the next layout action when a token appears at `col` after a
-    /// line break. Returns:
-    /// - `Pop` if the topmost frame is more deeply indented than `col`.
+    /// line break. `floor` frames at the bottom are never popped (Eager mode
+    /// keeps its top-level block open until end of input). Returns:
+    /// - `Pop` if the topmost frame is deeper than `col` and above the floor.
     /// - `Separator` if the topmost frame is exactly at `col`.
     /// - `None` otherwise.
-    pub(crate) fn step(&self, col: usize) -> CloseStep {
+    pub(crate) fn step(&self, col: usize, floor: usize) -> CloseStep {
         match self.top() {
-            Some(top) if top > col => CloseStep::Pop,
+            Some(top) if top > col && self.depth() > floor => CloseStep::Pop,
             Some(top) if top == col => CloseStep::Separator,
             _ => CloseStep::None,
         }
@@ -54,28 +55,37 @@ mod tests {
     #[test]
     fn empty_stack_is_none() {
         let s = IndentStack::default();
-        assert_eq!(s.step(0), CloseStep::None);
-        assert_eq!(s.step(99), CloseStep::None);
+        assert_eq!(s.step(0, 0), CloseStep::None);
+        assert_eq!(s.step(99, 0), CloseStep::None);
     }
 
     #[test]
     fn deeper_is_none() {
         let mut s = IndentStack::default();
         s.push(2);
-        assert_eq!(s.step(4), CloseStep::None);
+        assert_eq!(s.step(4, 0), CloseStep::None);
     }
 
     #[test]
     fn equal_is_separator() {
         let mut s = IndentStack::default();
         s.push(2);
-        assert_eq!(s.step(2), CloseStep::Separator);
+        assert_eq!(s.step(2, 0), CloseStep::Separator);
     }
 
     #[test]
     fn shallower_is_pop() {
         let mut s = IndentStack::default();
         s.push(4);
-        assert_eq!(s.step(2), CloseStep::Pop);
+        assert_eq!(s.step(2, 0), CloseStep::Pop);
+    }
+
+    #[test]
+    fn floor_frame_is_never_popped() {
+        let mut s = IndentStack::default();
+        s.push(4);
+        assert_eq!(s.step(2, 1), CloseStep::None);
+        s.push(8);
+        assert_eq!(s.step(2, 1), CloseStep::Pop);
     }
 }

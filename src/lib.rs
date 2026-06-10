@@ -7,9 +7,12 @@
 //! brace-and-semicolon shape and never has to think about columns.
 //!
 //! ```ignore
-//! use offsides::{LayoutLexer, LayoutConfig, LayoutMode};
+//! use offsides::{LayoutLexer, LayoutConfig, LayoutMode, OpenerRule};
 //!
-//! let cfg = LayoutConfig::new(is_layout_opener).with_mode(LayoutMode::Lazy);
+//! let cfg = LayoutConfig::new(is_layout_opener)
+//!     .with_mode(LayoutMode::Eager)
+//!     .with_opener_rule(OpenerRule::Conditional)
+//!     .with_brackets(is_bracket_open, is_bracket_close);
 //! let layout = LayoutLexer::new(my_logos_lexer, source, cfg);
 //! let ast = MyParser::new().parse(layout)?;
 //! ```
@@ -22,5 +25,5 @@ mod stack;
 
 pub mod layout;
 
-pub use layout::{Layout, LayoutConfig, LayoutMode};
+pub use layout::{Layout, LayoutConfig, LayoutMode, OpenerRule};
 pub use lexer::LayoutLexer;

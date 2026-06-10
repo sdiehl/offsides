@@ -2,7 +2,7 @@ use std::{collections::VecDeque, marker::PhantomData};
 
 use crate::{
     column::ColumnIndex,
-    layout::{Layout, LayoutConfig, LayoutMode},
+    layout::{Layout, LayoutConfig, LayoutMode, OpenerRule},
     stack::{CloseStep, IndentStack},
 };
 
@@ -14,9 +14,12 @@ use crate::{
 /// yields items of the same shape, with three kinds of virtual tokens spliced
 /// in at zero-width spans:
 ///
-/// - `T::v_open()` before the first token of a new layout block.
-/// - `T::v_sep()` before each sibling token at the block's indent level.
-/// - `T::v_close()` after the last token of a layout block.
+/// - `T::v_open()` before the first token of a new layout block, anchored at
+///   that token's start.
+/// - `T::v_sep()` before each sibling token at the block's indent level,
+///   anchored at the end of the previous token.
+/// - `T::v_close()` after the last token of a layout block, anchored at the end
+///   of that token.
 ///
 /// The result can be passed straight into a lalrpop parser whose grammar names
 /// those three virtual variants where it expects `{`, `;`, `}`.
@@ -33,10 +36,10 @@ where
     stack: IndentStack,
     pending: VecDeque<Result<(usize, T, usize), E>>,
     pending_opener: bool,
-    explicit_depth: usize,
+    carrying: bool,
+    bracket_depth: usize,
     prev_line: Option<usize>,
     last_hi: usize,
-    started: bool,
     done: bool,
     _marker: PhantomData<fn() -> Result<T, E>>,
 }
@@ -57,10 +60,10 @@ where
             stack: IndentStack::default(),
             pending: VecDeque::new(),
             pending_opener: false,
-            explicit_depth: 0,
+            carrying: false,
+            bracket_depth: 0,
             prev_line: None,
             last_hi: 0,
-            started: false,
             done: false,
             _marker: PhantomData,
         }
@@ -93,56 +96,55 @@ where
     fn handle_token(&mut self, lo: usize, tok: T, hi: usize) {
         let col = self.cols.column(&self.source, lo, self.cfg.tab_width);
         let cur_line = self.cols.line(lo);
+        let new_line = self.prev_line.is_none_or(|pl| cur_line > pl);
+        let in_brackets = self.bracket_depth > 0;
+        let is_bopen = self.cfg.is_bracket_open.is_some_and(|f| f(&tok));
+        let is_bclose = self.cfg.is_bracket_close.is_some_and(|f| f(&tok));
 
-        let is_opener = (self.cfg.is_opener)(&tok);
-        let is_xopen = self.cfg.is_explicit_open.is_some_and(|f| f(&tok));
-        let is_xclose = self.cfg.is_explicit_close.is_some_and(|f| f(&tok));
-
-        let mut just_opened = false;
-        if self.pending_opener && self.explicit_depth == 0 {
-            self.stack.push(col);
-            self.pending.push_back(Ok((lo, T::v_open(), lo)));
-            self.pending_opener = false;
-            just_opened = true;
-        } else if !self.started && self.cfg.mode == LayoutMode::Eager && self.explicit_depth == 0 {
-            self.stack.push(col);
-            self.pending.push_back(Ok((lo, T::v_open(), lo)));
-            just_opened = true;
-        }
-        self.started = true;
-
-        if !just_opened {
-            if let Some(pl) = self.prev_line {
-                if cur_line > pl && self.explicit_depth == 0 {
-                    loop {
-                        match self.stack.step(col) {
-                            CloseStep::Pop => {
-                                self.stack.pop();
-                                self.pending.push_back(Ok((lo, T::v_close(), lo)));
-                            }
-                            CloseStep::Separator => {
-                                self.pending.push_back(Ok((lo, T::v_sep(), lo)));
-                                break;
-                            }
-                            CloseStep::None => break,
+        if !in_brackets {
+            let opens = match self.cfg.opener_rule {
+                OpenerRule::Always => self.pending_opener,
+                OpenerRule::Conditional => {
+                    self.pending_opener && new_line && self.stack.top().is_none_or(|t| col > t)
+                }
+            };
+            if opens || (self.prev_line.is_none() && self.cfg.mode == LayoutMode::Eager) {
+                self.stack.push(col);
+                self.pending.push_back(Ok((lo, T::v_open(), lo)));
+            } else if new_line {
+                let floor = usize::from(self.cfg.mode == LayoutMode::Eager);
+                loop {
+                    match self.stack.step(col, floor) {
+                        CloseStep::Pop => {
+                            self.stack.pop();
+                            self.pending
+                                .push_back(Ok((self.last_hi, T::v_close(), self.last_hi)));
                         }
+                        CloseStep::Separator => {
+                            self.pending
+                                .push_back(Ok((self.last_hi, T::v_sep(), self.last_hi)));
+                            break;
+                        }
+                        CloseStep::None => break,
                     }
                 }
             }
+            self.pending_opener = (self.cfg.is_opener)(&tok);
+            self.carrying = self.cfg.is_carry_opener.is_some_and(|f| f(&tok))
+                || (self.carrying && !new_line && is_bopen);
         }
 
-        if is_xopen {
-            self.explicit_depth += 1;
+        if is_bopen {
+            self.bracket_depth += 1;
+        } else if is_bclose {
+            self.bracket_depth = self.bracket_depth.saturating_sub(1);
+            if self.bracket_depth == 0 && self.carrying {
+                self.pending_opener = true;
+                self.carrying = false;
+            }
         }
+
         self.pending.push_back(Ok((lo, tok, hi)));
-        if is_xclose {
-            self.explicit_depth = self.explicit_depth.saturating_sub(1);
-        }
-
-        if is_opener && self.explicit_depth == 0 {
-            self.pending_opener = true;
-        }
-
         self.prev_line = Some(self.cols.line(hi.saturating_sub(1).max(lo)));
         self.last_hi = hi;
     }
@@ -185,7 +187,7 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LayoutLexer")
             .field("stack_depth", &self.stack.depth())
-            .field("explicit_depth", &self.explicit_depth)
+            .field("bracket_depth", &self.bracket_depth)
             .field("pending", &self.pending.len())
             .finish_non_exhaustive()
     }
