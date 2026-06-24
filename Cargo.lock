@@ -274,9 +274,9 @@ dependencies = [
 
 [[package]]
 name = "marginalia"
-version = "0.1.4"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbfa48ac639e6d79ac8150af2fed081e5fda7bcf4db57daa11ced52f38a61d57"
+checksum = "bcfa1ee26a835e244dd0b6527d3c02ed983117e85b227c5ec28a39e323696a2e"
 
 [[package]]
 name = "memchr"
