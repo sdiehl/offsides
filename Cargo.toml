@@ -3,7 +3,7 @@ resolver = "2"
 members = ["examples/blocklet"]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Stephen Diehl <stephen.m.diehl@gmail.com>"]
 categories = ["parser-implementations", "development-tools"]
 documentation = "https://docs.rs/offsides"
@@ -19,7 +19,7 @@ lalrpop = { version = "0.23", default-features = false }
 lalrpop-util = { version = "0.23", features = ["lexer"] }
 logos = "0.16"
 marginalia = "0.2.0"
-offsides = { path = ".", version = "0.2.0" }
+offsides = { path = ".", version = "0.2.1" }
 thiserror = "2.0"
 
 [workspace.lints.rust]
