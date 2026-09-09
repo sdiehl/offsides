@@ -8,3 +8,7 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    ignore:
+      # The msrv job pins this action to the rust-version in Cargo.toml.
+      # Bumping it would silently stop testing the MSRV.
+      - dependency-name: dtolnay/rust-toolchain
